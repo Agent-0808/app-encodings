@@ -7,3 +7,6 @@ import { convertAllEscapes, hex2char, convertCharStr2CP } from './conversionfunc
 import { dec2char } from './lib/codepoints.js'
 
 Object.assign(window, basics, conversion, { convertAllEscapes, hex2char, convertCharStr2CP, dec2char })
+
+// 两栏输出行与勾选面板按注册表生成，必须在挂好 window 之后执行
+basics.init()
