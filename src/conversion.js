@@ -1,9 +1,12 @@
 
+import { indexes } from './data/indexes.js'
+import { chars2cps, dec2char, getIndexPtr } from './lib/codepoints.js'
+
 // INITIALISE INDEX DATA
 
 
  var big5CPs = []  // index is unicode cp, value is pointer
- for (p=5024;p<indexes.big5.length;p++) { // "Let index be index jis0208 excluding all pointers in the range 8272 to 8835, inclusive."
+ for (var p=5024;p<indexes.big5.length;p++) { // "Let index be index jis0208 excluding all pointers in the range 8272 to 8835, inclusive."
 	if (indexes.big5[p] != null && big5CPs[indexes.big5[p]] == null) {
 		big5CPs[indexes.big5[p]] = p
 		}
@@ -18,26 +21,26 @@ big5CPs[0x5345] = 5599
 
 
 var jis0208CPs = []  // index is unicode cp, value is pointer
- for (p=0;p<indexes.jis0208.length;p++) {
+ for (var p=0;p<indexes.jis0208.length;p++) {
 	if (indexes.jis0208[p] != null && jis0208CPs[indexes.jis0208[p]] == null) {
 		jis0208CPs[indexes.jis0208[p]] = p
 		}
 	}
 
  var sjisCPs = []  // index is unicode cp, value is pointer
- for (p=0;p<8272;p++) {
+ for (var p=0;p<8272;p++) {
 	if (indexes.jis0208[p] != null  && sjisCPs[indexes.jis0208[p]] == null) {
 		sjisCPs[indexes.jis0208[p]] = p
 	 	}
  	}
- for (p=8836;p<indexes.jis0208.length;p++) {
+ for (var p=8836;p<indexes.jis0208.length;p++) {
 	if (indexes.jis0208[p] != null  && sjisCPs[indexes.jis0208[p]] == null) {
 		sjisCPs[indexes.jis0208[p]] = p
 	 	}
  	}
 
  var euckrCPs = []  // index is unicode cp, value is pointer
-	 for (p=0;p<indexes.euckr.length;p++) {
+	 for (var p=0;p<indexes.euckr.length;p++) {
 		if (indexes.euckr[p] != null && euckrCPs[indexes.euckr[p]] == null) {
 			euckrCPs[indexes.euckr[p]] = p
 			}
@@ -92,7 +95,7 @@ var iso2022jpkatakana = [12290,12300,12301,12289,12539,12530,12449,12451,12453,1
 
 
 
-function big5Encoder (stream) {
+export function big5Encoder (stream) {
 	var cps = chars2cps(stream)
 	var out = ''
 	while (cps.length > 0) {
@@ -117,11 +120,11 @@ function big5Encoder (stream) {
 	return out
 	}
 
-function big5Decoder (stream) {
+export function big5Decoder (stream) {
 	stream = stream.replace(/%/g,' ')
 	stream = stream.replace(/[\s]+/g,' ').trim()
 	var bytes = stream.split(' ')
-	for (i=0;i<bytes.length;i++) bytes[i] = parseInt(bytes[i],16)
+	for (var i=0;i<bytes.length;i++) bytes[i] = parseInt(bytes[i],16)
 	var out = ''
 	var lead, byte, offset, ptr, cp
 	var big5lead = 0x00
@@ -161,13 +164,13 @@ function big5Decoder (stream) {
 
 
 
-function utf8Encoder (stream) {
+export function utf8Encoder (stream) {
 	// stream: a string of unicode characters
-	cps = chars2cps(stream)
+	var cps = chars2cps(stream)
 	var out = ''
 	var count, offset
 	while (cps.length > 0) {
-		cp = cps.shift()
+		var cp = cps.shift()
 		if (cp >= 0x00 && cp <= 0x7F) {  // ASCII
 			out +=  ' '+cp.toString(16)
 			continue
@@ -182,7 +185,7 @@ function utf8Encoder (stream) {
 			bytes.push(0x80|(temp & 0x3F))
 			count--
 			}
-		for (c=0;c<bytes.length;c++) {
+		for (var c=0;c<bytes.length;c++) {
 			out += ' '+bytes[c].toString(16)
 			}
 		}
@@ -190,12 +193,12 @@ function utf8Encoder (stream) {
 	}
 
 
-function utf8Decoder (stream) {
+export function utf8Decoder (stream) {
 	// stream: a string of space/percent separated, 2-digit hex byte codes
 	stream = stream.replace(/%/g,' ')
 	stream = stream.replace(/[\s]+/g,' ').trim()
 	var bytes = stream.split(' ')
-	for (i=0;i<bytes.length;i++) bytes[i] = parseInt(bytes[i],16)
+	for (var i=0;i<bytes.length;i++) bytes[i] = parseInt(bytes[i],16)
 
 	var out = ''
 	var u8cp = 0
@@ -247,7 +250,7 @@ function utf8Decoder (stream) {
 		u8cp = u8cp + ((byte - 0x80) << (6 * (bytesneeded - bytesseen)))
 		if (bytesseen != bytesneeded) continue
 		
-		cp = u8cp
+		var cp = u8cp
 		u8cp = 0
 		bytesneeded = 0
 		bytesseen = 0
@@ -262,14 +265,14 @@ function myutf8Decoder (stream) {
 	stream = stream.replace(/%/g,' ')
 	stream = stream.replace(/[\s]+/g,' ').trim()
 	var bytes = stream.split(' ')
-	for (i=0;i<bytes.length;i++) bytes[i] = parseInt(bytes[i],16)
+	for (var i=0;i<bytes.length;i++) bytes[i] = parseInt(bytes[i],16)
 
 	var out = ''
 	var counter = 0
 	var n = 0
 	
 	while (bytes.length > 0) {
-		b = bytes.shift()
+		var b = bytes.shift()
 		switch (counter) {
 			case 0:
 				if (0 <= b && b <= 0x7F) {  // 0xxxxxxx
@@ -309,11 +312,11 @@ function myutf8Decoder (stream) {
 
 
 
-function eucjpEncoder (stream) {
-	cps = chars2cps(stream)
+export function eucjpEncoder (stream) {
+	var cps = chars2cps(stream)
 	var out = ''
 	while (cps.length > 0) {
-		cp = cps.shift()
+		var cp = cps.shift()
 		if (cp >= 0x00 && cp <= 0x7F) {  // ASCII
 			out +=  ' '+cp.toString(16)
 			continue
@@ -321,7 +324,7 @@ function eucjpEncoder (stream) {
 		if (cp == 0xA5) { out += ' 5C'; continue }
 		if (cp == 0x203E) { out += ' 7E'; continue }
 		if (cp >= 0xFF61 && cp <= 0xFF9F) {
-			temp = cp - 0xFF61 + 0xA1
+			var temp = cp - 0xFF61 + 0xA1
 			out += ' 8E ' + temp.toString(16).toUpperCase()
 			continue
 			}
@@ -338,11 +341,11 @@ function eucjpEncoder (stream) {
 	return out
 	}
 
-function eucjpDecoder (stream) {
+export function eucjpDecoder (stream) {
 	stream = stream.replace(/%/g,' ')
 	stream = stream.replace(/[\s]+/g,' ').trim()
 	var bytes = stream.split(' ')
-	for (i=0;i<bytes.length;i++) bytes[i] = parseInt(bytes[i],16)
+	for (var i=0;i<bytes.length;i++) bytes[i] = parseInt(bytes[i],16)
 	var out = ''
 	var lead, byte, offset, ptr, cp
 	var jis0212flag = false
@@ -350,7 +353,7 @@ function eucjpDecoder (stream) {
 	while (bytes.length > 0) {
 		byte = bytes.shift()														
 		if (eucjpLead == 0x8E && byte >= 0xA1 && byte <= 0xDF) {	
-			temp = 0xFF61 + byte - 0xA1
+			var temp = 0xFF61 + byte - 0xA1
 			out += dec2char(temp)
 			continue
 			}
@@ -386,7 +389,7 @@ function eucjpDecoder (stream) {
 	}
 
 
-function iso2022jpEncoder (stream) {
+export function iso2022jpEncoder (stream) {
 	var cps = chars2cps(stream)
 	var endofstream = 2000000
 	cps.push(endofstream)
@@ -437,7 +440,7 @@ function iso2022jpEncoder (stream) {
 		if (cp >= 0xFF61 && cp <= 0xFF9F) {
 			cp = iso2022jpkatakana[cp-0xFF61]
 			}
-		ptr = jis0208CPs[cp]
+		var ptr = jis0208CPs[cp]
 		if (ptr == null) {
 			out += ' &#'+cp+';'
 			continue
@@ -455,11 +458,11 @@ function iso2022jpEncoder (stream) {
 	return out.trim()
 	}
 
-function iso2022jpDecoder (stream) {
+export function iso2022jpDecoder (stream) {
 	stream = stream.replace(/%/g,' ')
 	stream = stream.replace(/[\s]+/g,' ').trim()
 	var bytes = stream.split(' ')
-	for (i=0;i<bytes.length;i++) bytes[i] = parseInt(bytes[i],16)
+	for (var i=0;i<bytes.length;i++) bytes[i] = parseInt(bytes[i],16)
 	var endofstream = 2000000
 	//bytes.push(endofstream)
 	var out = ''
@@ -551,7 +554,7 @@ function iso2022jpDecoder (stream) {
 								continue
 								 }
 							break
-			case 'escape': 	lead = isoLead
+			case 'escape': 	var lead = isoLead
 							isoLead = 0x00
 							var state = null
 							if (lead == 0x28 && byte == 0x42) state = 'ascii'
@@ -582,11 +585,11 @@ function iso2022jpDecoder (stream) {
 
 
 
-function sjisEncoder (stream) {
-	cps = chars2cps(stream)
+export function sjisEncoder (stream) {
+	var cps = chars2cps(stream)
 	var out = ''
 	while (cps.length > 0) {
-		cp = cps.shift()
+		var cp = cps.shift()
 		if ((cp >= 0x00 && cp <= 0x7F) || cp == 0x80) {  
 			out +=  ' '+cp.toString(16)
 			continue
@@ -594,7 +597,7 @@ function sjisEncoder (stream) {
 		if (cp == 0xA5) { out += ' 5C'; continue }
 		if (cp == 0x203E) { out += ' 7E'; continue }
 		if (cp >= 0xFF61 && cp <= 0xFF9F) {
-			temp = cp - 0xFF61 + 0xA1
+			var temp = cp - 0xFF61 + 0xA1
 			out += temp.toString(16)
 			continue
 			}
@@ -605,23 +608,25 @@ function sjisEncoder (stream) {
 			continue
 			}
 		var lead = Math.floor(ptr/188)
+		var leadoffset
 		if (lead < 0x1F) leadoffset = 0x81
 		else leadoffset = 0xC1
 		var trail = (ptr % 188)
-		first = lead + leadoffset
+		var first = lead + leadoffset
+		var offset
 		if (trail < 0x3F) offset = 0x40
 		else offset = 0x41
-		second = trail + offset
+		var second = trail + offset
 		out += ' '+first.toString(16).toUpperCase()+' '+second.toString(16).toUpperCase()
 		}
 	return out
 	}
 
-function sjisDecoder (stream) {
+export function sjisDecoder (stream) {
 	stream = stream.replace(/%/g,' ')
 	stream = stream.replace(/[\s]+/g,' ').trim()
 	var bytes = stream.split(' ')
-	for (i=0;i<bytes.length;i++) bytes[i] = parseInt(bytes[i],16)
+	for (var i=0;i<bytes.length;i++) bytes[i] = parseInt(bytes[i],16)
 	var out = ''
 	var lead, byte, leadoffset, offset, ptr, cp
 	var sjisLead = 0x00
@@ -640,7 +645,7 @@ function sjisDecoder (stream) {
 			if (ptr == null) cp = null
 			else cp = indexes.jis0208[ptr]
 			if (cp == null && ptr >= 8836 && ptr <= 10715) {
-				temp = 0xE000 + ptr - 8836
+				var temp = 0xE000 + ptr - 8836
 				out += dec2char(temp)
 				continue
 				}
@@ -659,7 +664,7 @@ function sjisDecoder (stream) {
 			continue
 			}
 		if (byte >= 0xA1 && byte <= 0xDF) {
-			temp = 0xFF61 + byte - 0xA1
+			var temp = 0xFF61 + byte - 0xA1
 			out += dec2char(temp)
 			continue
 			}
@@ -676,11 +681,11 @@ function sjisDecoder (stream) {
 
 
 
-function euckrEncoder (stream) {
-	cps = chars2cps(stream)
+export function euckrEncoder (stream) {
+	var cps = chars2cps(stream)
 	var out = ''
 	while (cps.length > 0) {
-		cp = cps.shift()
+		var cp = cps.shift()
 		if (cp >= 0x00 && cp <= 0x7F) {  // ASCII
 			out +=  ' '+cp.toString(16)
 			continue
@@ -697,11 +702,11 @@ function euckrEncoder (stream) {
 	return out
 	}
 
-function euckrDecoder (stream) {
+export function euckrDecoder (stream) {
 	stream = stream.replace(/%/g,' ')
 	stream = stream.replace(/[\s]+/g,' ').trim()
 	var bytes = stream.split(' ')
-	for (i=0;i<bytes.length;i++) bytes[i] = parseInt(bytes[i],16)
+	for (var i=0;i<bytes.length;i++) bytes[i] = parseInt(bytes[i],16)
 	var out = ''
 	var lead, byte, offset, ptr, cp
 	var euckrLead = 0x00
@@ -742,7 +747,7 @@ function euckrDecoder (stream) {
 
 
 
-function gbEncoder (stream, gbk) {
+export function gbEncoder (stream, gbk) {
 	var cps = chars2cps(stream)
 	var out = ''
 	var lead, trail, ptr, offset, end
@@ -776,12 +781,12 @@ function gbEncoder (stream, gbk) {
 			continue
 			}
 		ptr = getRangePtr(cp)
-		byte1 = Math.floor(ptr / 10 /126 /10)
+		var byte1 = Math.floor(ptr / 10 /126 /10)
 		ptr = ptr - byte1 * 10 * 126 * 10
-		byte2 = Math.floor(ptr / 10 /126)
+		var byte2 = Math.floor(ptr / 10 /126)
 		ptr = ptr - byte2 * 10 * 126
-		byte3 = Math.floor(ptr / 10)
-		byte4 = ptr - byte3 * 10
+		var byte3 = Math.floor(ptr / 10)
+		var byte4 = ptr - byte3 * 10
 		byte1 += 0x81
 		byte2 += 0x30
 		byte3 += 0x81
@@ -791,11 +796,11 @@ function gbEncoder (stream, gbk) {
 	return out
 	}
 
-function gbDecoder (stream) {
+export function gbDecoder (stream) {
 	stream = stream.replace(/%/g,' ')
 	stream = stream.replace(/[\s]+/g,' ').trim()
 	var bytes = stream.split(' ')
-	for (i=0;i<bytes.length;i++) bytes[i] = parseInt(bytes[i],16)
+	for (var i=0;i<bytes.length;i++) bytes[i] = parseInt(bytes[i],16)
 	var out = ''
 	var lead, byte, offset, ptr, cp
 	var first = 0x00
@@ -803,7 +808,7 @@ function gbDecoder (stream) {
 	var third = 0x00
 	var endofstream = 2000000
 	//bytes.push(endofstream)
-	finished = false
+	var finished = false
 	
 	while (!finished) {
 		if (bytes.length == 0) byte = endofstream
@@ -824,7 +829,7 @@ function gbDecoder (stream) {
 			if (byte >= 0x30 && byte <= 0x39) {
 				cp = getRangeCP((((first - 0x81) * 10 + second - 0x30) * 126 + third - 0x81) *10 + byte - 0x30)
 				}
-			buffer = [second, third, byte]
+			var buffer = [second, third, byte]
 			first = 0x00
 			second = 0x00
 			third = 0x00
@@ -890,7 +895,7 @@ function gbDecoder (stream) {
 
 
 
-function sbEncoder (stream, index) {
+export function sbEncoder (stream, index) {
 	var cps = chars2cps(stream)
 	var out = ''
 	
@@ -912,11 +917,11 @@ function sbEncoder (stream, index) {
 	return out
 	}
 
-function sbDecoder (stream, index) {
+export function sbDecoder (stream, index) {
 	stream = stream.replace(/%/g,' ')
 	stream = stream.replace(/[\s]+/g,' ').trim()
 	var bytes = stream.split(' ')
-	for (i=0;i<bytes.length;i++) bytes[i] = parseInt(bytes[i],16)
+	for (var i=0;i<bytes.length;i++) bytes[i] = parseInt(bytes[i],16)
 	var out = ''
 	
 	while (bytes.length > 0) {

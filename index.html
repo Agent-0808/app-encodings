@@ -5,9 +5,7 @@
 <title>Encoding converter</title>
 <meta name="description" content="Tool to explore encoding and decoding between Unicode and other encodings." />
 <link rel="stylesheet" type="text/css" href="style.css" />
-<script type="text/javascript" src="indexes.js"></script>
-<script type="text/javascript" src="basics.js"></script>
-<script type="text/javascript" src="conversionfunctions.js"></script>
+<script type="module" src="/src/main.ts"></script>
 </head>
 
 <body class="app">
@@ -17,8 +15,6 @@
 </header>
 
 <div class="section" style="margin-left:7.5%;">
-
-<script src="conversion.js"></script>
 
   <div class="column" id="encodingcolumn">
   <form action="none" onsubmit="encode(convertAllEscapes(document.getElementById('uChar').value)); return false;">

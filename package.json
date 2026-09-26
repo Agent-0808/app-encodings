@@ -1,0 +1,19 @@
+{
+  "name": "app-encodings",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Tool to explore encoding and decoding between Unicode and other encodings.",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "typescript": "^7.0.2",
+    "vite": "^8.3.1",
+    "vitest": "^4.1.11"
+  }
+}

@@ -1,5 +1,5 @@
 
-// test string abcáßçकखी國際𐎄𐎔𐎘
+// test string abcÃ¡ÃÃ§à¤à¤à¥åéððð
 	 /*
 	Copyright (C) 2007  Richard Ishida ishida@w3.org
 	This program is free software; you can redistribute it and/or modify it under the terms 
@@ -205,7 +205,7 @@ function extractEscapes (strIn) {
 
 
 
-function hex2char ( hex ) {
+export function hex2char ( hex ) {
 	// converts a single hex number to a character
 	// note that no checking is performed to ensure that this is just a hex number, eg. no spaces etc
 	// hex: string, the hex codepoint to be converted
@@ -283,12 +283,12 @@ function convertChar2CP ( textString ) {
 // ========================== Converting to characters ==============================================
 
 
-function convertAllEscapes (str, numbers) {
+export function convertAllEscapes (str, numbers) {
 	// converts all escapes in the text str to characters, and can interpret numbers as escapes too
 	// str: string, the text to be converted
 	// numbers: string enum [none, hex, dec, utf8, utf16], what to treat numbers as
 	
-	sle = document.getElementById('singleletterescapes').checked
+	var sle = document.getElementById('singleletterescapes').checked
 	str = convertUnicode2Char(str)
 	str = convert0x2Char(str)
 	str = convertuBracket2Char(str)
@@ -361,11 +361,11 @@ function convert0x2Char ( str ) {
 	// converts a string containing 0x... escapes to a string of characters
 	// str: string, the input
     
-    // change 0x to �� to avoid things like 0x1F4680x200D as being interpreted as too big a number
-    str = str.replace(/0x/g,'��')
+    // change 0x to §§ to avoid things like 0x1F4680x200D as being interpreted as too big a number
+    str = str.replace(/0x/g,'§§')
 	
 	// convert up to 6 digit escapes to characters
-	str = str.replace(/��([A-Fa-f0-9]{1,6})/g, 
+	str = str.replace(/§§([A-Fa-f0-9]{1,6})/g, 
 					function(matchstr, parens) {
 						return hex2char(parens)
 						}
@@ -612,7 +612,7 @@ function convertSpaceSeparatedNumbers2Char ( str, type ) {
 	// type: string enum [none, hex, dec, utf8, utf16], what to treat numbers as
 	
     // use a replacement for spaces, so they can be removed before the end
-    str = str.replace(/ /g, '���')
+    str = str.replace(/ /g, '§±§')
     
 	if (type === 'hex') {
 		str = str.replace(/([A-Fa-f0-9]{2,8}\b)/g, 
@@ -643,7 +643,7 @@ function convertSpaceSeparatedNumbers2Char ( str, type ) {
 						}
 						)
 		}
-	return str.replace(/���/g,'')
+	return str.replace(/§±§/g,'')
 	}
 
 
@@ -1164,49 +1164,6 @@ function convertCharStr2SelectiveCPs ( str, parameters, pad, before, after, base
 	return CPstring;
 	}
 	
-function convertCharStr2Unicode ( textString, preserve, pad ) { 
-	// converts a string of characters to U+... notation, separated by space
-	// textString: string, the string to convert
-	// preserve: string enum [ascii, latin1], a set of characters to not convert
-	// pad: boolean, if true, hex numbers lower than 1000 are padded with zeros
-	var haut = 0;
-	var n = 0;
-	var CPstring = ''; pad=false;
-	for (var i = 0; i < textString.length; i++) {
-		var b = textString.charCodeAt(i); 
-		if (b < 0 || b > 0xFFFF) {
-			CPstring += 'Error in convertChar2CP: byte out of range ' + dec2hex(b) + '!';
-			}
-		if (haut != 0) {
-			if (0xDC00 <= b && b <= 0xDFFF) {
-				CPstring += dec2hex(0x10000 + ((haut - 0xD800) << 10) + (b - 0xDC00)) + ' ';
-				haut = 0;
-				continue;
-				}
-			else {
-				CPstring += 'Error in convertChar2CP: surrogate out of range ' + dec2hex(haut) + '!';
-				haut = 0;
-				}
-			}
-		if (0xD800 <= b && b <= 0xDBFF) {
-			haut = b;
-			}
-		else {
-			if (b <= 127 && preserve == 'ascii') {
-				CPstring += textString.charAt(i)+' ';
-				}
-			else if (b <= 255 && preserve == 'latin1') {
-				CPstring += textString.charAt(i)+' ';
-				}
-			else { 
-				cp = dec2hex(b); 
-				if (pad) { while (cp.length < 4) { cp = '0'+cp; } }
-				CPstring += 'U+' + cp + ' '; 
-				}
-			}
-		}
-	return CPstring.substring(0, CPstring.length-1);
-	}
 
 
 function convertCharStr2HexNCR ( textString ) {
@@ -1531,7 +1488,7 @@ function convertCharStr2CSS ( str ) {
 
 
 
-function convertCharStr2CP ( textString, parameters, pad, type, mixed ) {
+export function convertCharStr2CP ( textString, parameters, pad, type, mixed ) {
 	// converts a string of characters to code points, separated by space
 	// textString: string, the string to convert
 	// parameters: string enum [ascii, latin1], a set of characters to not convert

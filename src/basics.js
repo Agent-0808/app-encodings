@@ -1,7 +1,13 @@
-function encode ( stream ) {
+import { indexes } from './data/indexes.js'
+import {
+	utf8Encoder, big5Encoder, eucjpEncoder, iso2022jpEncoder, sjisEncoder, euckrEncoder, gbEncoder, sbEncoder,
+	utf8Decoder, big5Decoder, eucjpDecoder, iso2022jpDecoder, sjisDecoder, euckrDecoder, gbDecoder, sbDecoder
+	} from './conversion.js'
+
+export function encode ( stream ) {
 	// clear out the previous results
-	spans = document.getElementById('encodingcolumn').querySelectorAll('span')
-	for (s=0;s<spans.length;s++) if (spans[s].textContent != '↗') spans[s].textContent = ''
+	var spans = document.getElementById('encodingcolumn').querySelectorAll('span')
+	for (var s=0;s<spans.length;s++) if (spans[s].textContent != '↗') spans[s].textContent = ''
 	if (live.utf8) document.getElementById('utf8encResult').textContent = utf8Encoder(stream)
 	if (live.big5) document.getElementById('big5encResult').textContent = big5Encoder(stream)
 	if (live.eucjp) document.getElementById('eucjpencResult').textContent = eucjpEncoder(stream)
@@ -40,16 +46,16 @@ function encode ( stream ) {
 	if (live.iso885916) document.getElementById('iso885916encResult').textContent = sbEncoder(stream, indexes.iso885916)
 	
 	// paint the background green if there isn't an escape character
-	tests = document.getElementById('encodingcolumn').querySelectorAll('.output')
+	var tests = document.getElementById('encodingcolumn').querySelectorAll('.output')
 	for (var t=0;t<tests.length;t++) {
 		if (tests[t].textContent.match('&')) tests[t].className = 'output'
 		else if (tests[t].childNodes[3].textContent != '') tests[t].className = 'output yes'
 		}
 	}
 
-function decode ( stream ) {
-	spans = document.getElementById('decodingcolumn').querySelectorAll('span')
-	for (s=0;s<spans.length;s++) spans[s].textContent = ''
+export function decode ( stream ) {
+	var spans = document.getElementById('decodingcolumn').querySelectorAll('span')
+	for (var s=0;s<spans.length;s++) spans[s].textContent = ''
 	if (live.utf8) document.getElementById('utf8decResult').textContent = utf8Decoder(stream)
 	if (live.big5) document.getElementById('big5decResult').textContent = big5Decoder(stream)
 	if (live.eucjp) document.getElementById('eucjpdecResult').textContent = eucjpDecoder(stream)
@@ -87,7 +93,7 @@ function decode ( stream ) {
 	if (live.iso885915) document.getElementById('iso885915decResult').textContent = sbDecoder(stream, indexes.iso885915)
 	if (live.iso885916) document.getElementById('iso885916decResult').textContent = sbDecoder(stream, indexes.iso885916)
 
-	tests = document.getElementById('decodingcolumn').querySelectorAll('.output')
+	var tests = document.getElementById('decodingcolumn').querySelectorAll('.output')
 	for (var t=0;t<tests.length;t++) {
 		if (tests[t].textContent.match('�')) tests[t].className = 'output'
 		else if (tests[t].childNodes[3].textContent != '') tests[t].className = 'output yes'
@@ -97,119 +103,9 @@ function decode ( stream ) {
 
 
 
-
-function chars2cps ( chars ) { 
-	// this is needed because of javascript's handling of supplementary characters
-	// char: a string of unicode characters
-	// returns an array of decimal code point values
-	var haut = 0
-	var n = 0
-	var out = []
-	for (var i = 0; i < chars.length; i++) {
-		var b = chars.charCodeAt(i)
-		if (b < 0 || b > 0xFFFF) {
-			alert( 'Error in chars2cps: byte out of range ' + b.toString(16) + '!' )
-			}
-		if (haut != 0) {
-			if (0xDC00 <= b && b <= 0xDFFF) {
-				out.push(0x10000 + ((haut - 0xD800) << 10) + (b - 0xDC00))
-				haut = 0
-				continue
-				}
-			else {
-				alert( 'Error in chars2cps: surrogate out of range ' + haut.toString(16) + '!' )
-				haut = 0
-				}
-			}
-		if (0xD800 <= b && b <= 0xDBFF) {
-			haut = b
-			}
-		else {
-			out.push( b )
-			}
-		}
-	return out
-	}
-
-function cps2chars ( str ) {
-	// converts to characters a sequence of space-separated hex numbers representing bytes in utf8
-	// str: string, the sequence to be converted
-	var out = ""
-	var counter = 0
-	var n = 0
-	
-	// remove leading and trailing spaces
-	str = str.replace(/^\s+/, '')
-	str = str.replace(/\s+$/,'')
-	if (str.length == 0) { return "" }
-	str = str.replace(/\s+/g, ' ')
-  
-	var listArray = str.split(' ')
-	for ( var i = 0; i < listArray.length; i++ ) {
-		var b = parseInt(listArray[i], 16)  // console.log('b:'+dec2hex(b));
-		switch (counter) {
-			case 0:
-				if (0 <= b && b <= 0x7F) {  // 0xxxxxxx
-					out += dec2char(b) } 
-				else if (0xC0 <= b && b <= 0xDF) {  // 110xxxxx
-					counter = 1
-					n = b & 0x1F }
-				else if (0xE0 <= b && b <= 0xEF) {  // 1110xxxx
-					counter = 2
-					n = b & 0xF }
-				else if (0xF0 <= b && b <= 0xF7) {  // 11110xxx
-					counter = 3
-					n = b & 0x7 }
-				else {
-					out += '�'
-					}
-				break;
-			case 1:
-				if (b < 0x80 || b > 0xBF) {
-					out += '�'
-					}
-				counter--
-				out += dec2char((n << 6) | (b-0x80))
-				n = 0
-				break
-			case 2: case 3:
-				if (b < 0x80 || b > 0xBF) {
-					out += '�'
-					}
-				n = (n << 6) | (b-0x80)
-				counter--
-				break
-			}
-		}
-		return out.trim()
-	}
-
-function dec2char ( n ) {
-	// converts a decimal number to a Unicode character
-	// n: the dec codepoint value to be converted
-    if (n <= 0xFFFF) { out = String.fromCharCode(n) } 
-	else if (n <= 0x10FFFF) {
-		n -= 0x10000
-		out = String.fromCharCode(0xD800 | (n >> 10)) + String.fromCharCode(0xDC00 | (n & 0x3FF))
-    	} 
-	else out = 'dec2char error: Code point out of range: '+n
-	return out
-	}
-
-
-function getIndexPtr (cp, index) {
-	 for (p=0;p<index.length;p++) {
-		if (index[p] == cp) {
-			return p
-			}
-		}
-	return null
-	}
-
-
 var live = { utf8: true, big5: true, eucjp:true, iso2022jp:true, shiftjis:true, euckr: true, gb18030:true, gbk:true, koi8r:false, windows1250:false, windows1251:false, windows1252:true, windows1253:false, windows1254:false, windows1255:false, windows1256:false, windows1257:false, windows1258:false, windows874:false, macintosh:false, ibm866:false, xmaccyrillic:false, iso88592:false, iso88593:false, iso88594:false, iso88595:false, iso88596:false, iso88597:false, iso88598:false, iso88598i:false, iso885910:false, iso885913:false, iso885914:false, iso885915:false, iso885916:false }
 
-function toggleEnc (enc) {
+export function toggleEnc (enc) {
 	var encnode = document.getElementById(enc+'enc')
 	var decnode = document.getElementById(enc+'dec')
 	if (encnode.style.display == 'none') {
@@ -242,28 +138,28 @@ function openEnc (enc) {
 	live[enc] = true
 	}
 
-function closeAll () {
-	tds = document.getElementById('customsettings').querySelectorAll('input')
-	for (e=0;e<tds.length;e++) {
+export function closeAll () {
+	var tds = document.getElementById('customsettings').querySelectorAll('input')
+	for (var e=0;e<tds.length;e++) {
 		if (tds[e].id != 'utf8') closeEnc(tds[e].id)
 		}
 	}
 
-function selectAll () {
-	tds = document.getElementById('customsettings').querySelectorAll('input')
-	for (e=0;e<tds.length;e++) {
+export function selectAll () {
+	var tds = document.getElementById('customsettings').querySelectorAll('input')
+	for (var e=0;e<tds.length;e++) {
 		if (tds[e].id != 'utf8') openEnc(tds[e].id)
 		}
 	}
 
-function toggleCustomList () {
-	node = document.getElementById('customsettings')
+export function toggleCustomList () {
+	var node = document.getElementById('customsettings')
 	if (node.style.display == 'none') node.style.display = 'block'
 	else node.style.display = 'none'
 	}
 
 
-function toggleNotes () {
+export function toggleNotes () {
 	var notes = document.getElementById('detailednotes')
 	var showNotes = document.getElementById('showNotes')
 	if (notes.style.display=='block') {
@@ -276,16 +172,16 @@ function toggleNotes () {
 		} 
 	}
 
-function toDec (id) {
+export function toDec (id) {
 	document.getElementById('lBytes').value = document.getElementById(id).textContent
 	}
 
-function toEnc (id) {
+export function toEnc (id) {
 	document.getElementById('uChar').value = document.getElementById(id).textContent
 	}
 
 
-function showEncoding (enc) {
+export function showEncoding (enc) {
 	switch (enc) {
 		case 'big5': dbdisplay( 'encoding/legacy-mb-tchinese/big5/tools/make-big5-utf8-list'); break
 		case 'eucjp': dbdisplay( 'encoding/legacy-mb-japanese/euc-jp/tools/make-eucjp-utf8-list'); break
@@ -333,7 +229,7 @@ function sbdisplay (enc) {
 	for (var i=0;i<enc.length;i++) {
 		characters += String.fromCodePoint(enc[i])
 		}
-	charDisplay = window.open('https://r12a.github.io/apps/listcharacters?chars='+encodeURIComponent(characters), 'charDisplay')
+	var charDisplay = window.open('https://r12a.github.io/apps/listcharacters?chars='+encodeURIComponent(characters), 'charDisplay')
 	charDisplay.focus()
 	}
 
@@ -341,6 +237,6 @@ function sbdisplay (enc) {
 function dbdisplay (url) {
 	// opens the character list tool in another window to display the characters in the encoding
 	
-	charDisplay = window.open('http://www.w3.org/International/tests/repo/'+url, 'charDisplay')
+	var charDisplay = window.open('http://www.w3.org/International/tests/repo/'+url, 'charDisplay')
 	charDisplay.focus()
 	}
