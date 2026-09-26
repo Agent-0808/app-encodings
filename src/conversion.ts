@@ -38,12 +38,7 @@ export function renderDecode (units: DecodeUnit[]): string {
 	return out
 	}
 
-/** 解码侧各函数的公共前奏：把空格/百分号分隔的十六进制串切成字节数组 */
-function parseBytes (stream: string): number[] {
-	stream = stream.replace(/%/g,' ')
-	stream = stream.replace(/[\s]+/g,' ').trim()
-	return stream.split(' ').map(byte => parseInt(byte,16))
-	}
+// 解码侧不再自己解析输入串：文本 → 字节统一走 src/input/hex.ts，各 decoder 直接收字节数组。
 
 
 // INITIALISE INDEX DATA
@@ -171,8 +166,7 @@ export function big5Encoder (stream: string): EncodeSegment[] {
 	return segments
 	}
 
-export function big5Decoder (stream: string): DecodeUnit[] {
-	var bytes = parseBytes(stream)
+export function big5Decoder (bytes: number[]): DecodeUnit[] {
 	var units: DecodeUnit[] = []
 	var pos = 0
 	var lead, byte, offset, ptr, cp
@@ -238,10 +232,8 @@ export function utf8Encoder (stream: string): EncodeSegment[] {
 	}
 
 
-export function utf8Decoder (stream: string): DecodeUnit[] {
-	// stream: a string of space/percent separated, 2-digit hex byte codes
-	var bytes = parseBytes(stream)
-
+export function utf8Decoder (bytes: number[]): DecodeUnit[] {
+	// bytes: 字节数组（文本 → 字节由 src/input/hex.ts 负责）
 	var units: DecodeUnit[] = []
 	var pos = 0
 	var u8cp = 0
@@ -341,8 +333,7 @@ export function eucjpEncoder (stream: string): EncodeSegment[] {
 	return segments
 	}
 
-export function eucjpDecoder (stream: string): DecodeUnit[] {
-	var bytes = parseBytes(stream)
+export function eucjpDecoder (bytes: number[]): DecodeUnit[] {
 	var units: DecodeUnit[] = []
 	var pos = 0
 	var lead, byte, ptr, cp
@@ -485,8 +476,7 @@ export function iso2022jpEncoder (stream: string): EncodeSegment[] {
 	return segments
 	}
 
-export function iso2022jpDecoder (stream: string): DecodeUnit[] {
-	var bytes = parseBytes(stream)
+export function iso2022jpDecoder (bytes: number[]): DecodeUnit[] {
 	var endofstream = 2000000
 	//bytes.push(endofstream)
 	var units: DecodeUnit[] = []
@@ -679,8 +669,7 @@ export function sjisEncoder (stream: string): EncodeSegment[] {
 	return segments
 	}
 
-export function sjisDecoder (stream: string): DecodeUnit[] {
-	var bytes = parseBytes(stream)
+export function sjisDecoder (bytes: number[]): DecodeUnit[] {
 	var units: DecodeUnit[] = []
 	var pos = 0
 	var lead, byte, leadoffset, offset, ptr, cp
@@ -761,8 +750,7 @@ export function euckrEncoder (stream: string): EncodeSegment[] {
 	return segments
 	}
 
-export function euckrDecoder (stream: string): DecodeUnit[] {
-	var bytes = parseBytes(stream)
+export function euckrDecoder (bytes: number[]): DecodeUnit[] {
 	var units: DecodeUnit[] = []
 	var pos = 0
 	var lead, byte, ptr, cp
@@ -856,8 +844,7 @@ export function gbEncoder (stream: string, gbk: boolean): EncodeSegment[] {
 	return segments
 	}
 
-export function gbDecoder (stream: string): DecodeUnit[] {
-	var bytes = parseBytes(stream)
+export function gbDecoder (bytes: number[]): DecodeUnit[] {
 	var units: DecodeUnit[] = []
 	var pos = 0
 	var lead, byte, offset, ptr, cp
@@ -976,8 +963,7 @@ export function sbEncoder (stream: string, index: (number | null)[]): EncodeSegm
 	return segments
 	}
 
-export function sbDecoder (stream: string, index: (number | null)[]): DecodeUnit[] {
-	var bytes = parseBytes(stream)
+export function sbDecoder (bytes: number[], index: (number | null)[]): DecodeUnit[] {
 	var units: DecodeUnit[] = []
 	var pos = 0
 

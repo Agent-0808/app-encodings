@@ -12,10 +12,19 @@ import {
 	sbEncoder, sbDecoder,
 	utf8Encoder, utf8Decoder
 	} from '../conversion.ts'
-import type { DecodeUnit, EncodeSegment } from './types.js'
+import type { DecodeInput, DecodeUnit, EncodeSegment } from './types.js'
+import { unicodeEncoder, unicodeDecoder, unicodeVariants } from './unicode.js'
 
 /** 勾选面板里的分组：三列各放一组，与改造前的版面一致 */
 export type RegistryGroup = 'common' | 'windows' | 'iso'
+
+/** 一种可切换的展示格式：目前只有 Unicode 序号这行用得上（§5.6） */
+export interface EncodingVariant {
+	/** 下拉框里的选项文本，如 'U+4F60' */
+	label: string
+	/** 传给 encode / decode 的取值 */
+	value: string
+	}
 
 /** 一个编码在 UI 上需要的全部信息 */
 export interface EncodingEntry {
@@ -27,8 +36,11 @@ export interface EncodingEntry {
 	group: RegistryGroup
 	/** 初始是否展示（默认只留常用编码） */
 	shown?: boolean
-	encode: (stream: string) => EncodeSegment[]
-	decode: (stream: string) => DecodeUnit[]
+	/** 声明了就在行内出现格式下拉框，两栏的框联动 */
+	variants?: EncodingVariant[]
+	encode: (stream: string, variant?: string) => EncodeSegment[]
+	/** 解码侧统一收 DecodeInput：字节型编码用 bytes，Unicode 序号行用 text */
+	decode: (input: DecodeInput, variant?: string) => DecodeUnit[]
 	}
 
 /** indexes.js 仍是 JS 模块，元素类型是宽松的联合；这里收敛成本模块实际用到的形态 */
@@ -37,19 +49,21 @@ type SingleByteTable = (number | null)[] | number[][]
 /** 24 个单字节编码共用同一组编解码器，区别只在索引表 */
 function singleByte (id: string, label: string, table: SingleByteTable, group: RegistryGroup, shown = false): EncodingEntry {
 	const index = table as (number | null)[]
-	return { id, label, group, shown, encode: stream => sbEncoder(stream, index), decode: stream => sbDecoder(stream, index) }
+	return { id, label, group, shown, encode: stream => sbEncoder(stream, index), decode: input => sbDecoder(input.bytes, index) }
 	}
 
 export const registry: EncodingEntry[] = [
-	{ id: 'utf8', label: 'utf-8', group: 'common', shown: true, encode: utf8Encoder, decode: utf8Decoder },
-	{ id: 'big5', label: 'big5', group: 'common', shown: true, encode: big5Encoder, decode: big5Decoder },
-	{ id: 'eucjp', label: 'euc-jp', group: 'common', shown: true, encode: eucjpEncoder, decode: eucjpDecoder },
-	{ id: 'iso2022jp', label: 'iso-2022-jp', group: 'common', shown: true, encode: iso2022jpEncoder, decode: iso2022jpDecoder },
-	{ id: 'shiftjis', label: 'shift_jis', group: 'common', shown: true, encode: sjisEncoder, decode: sjisDecoder },
-	{ id: 'euckr', label: 'euc-kr', group: 'common', shown: true, encode: euckrEncoder, decode: euckrDecoder },
+	{ id: 'utf8', label: 'utf-8', group: 'common', shown: true, encode: utf8Encoder, decode: input => utf8Decoder(input.bytes) },
+	// Unicode 序号是「伪编码」：不产生字节，只把码位按所选格式写出来（5.6）
+	{ id: 'unicode', label: 'Unicode', group: 'common', shown: true, variants: unicodeVariants, encode: unicodeEncoder, decode: (input, variant) => unicodeDecoder(input.text, variant) },
+	{ id: 'big5', label: 'big5', group: 'common', shown: true, encode: big5Encoder, decode: input => big5Decoder(input.bytes) },
+	{ id: 'eucjp', label: 'euc-jp', group: 'common', shown: true, encode: eucjpEncoder, decode: input => eucjpDecoder(input.bytes) },
+	{ id: 'iso2022jp', label: 'iso-2022-jp', group: 'common', shown: true, encode: iso2022jpEncoder, decode: input => iso2022jpDecoder(input.bytes) },
+	{ id: 'shiftjis', label: 'shift_jis', group: 'common', shown: true, encode: sjisEncoder, decode: input => sjisDecoder(input.bytes) },
+	{ id: 'euckr', label: 'euc-kr', group: 'common', shown: true, encode: euckrEncoder, decode: input => euckrDecoder(input.bytes) },
 	// gb18030 与 gbk 只差一个开关，解码方向完全共用（与 legacy 一致）
-	{ id: 'gb18030', label: 'gb18030', group: 'common', shown: true, encode: stream => gbEncoder(stream, false), decode: gbDecoder },
-	{ id: 'gbk', label: 'gbk', group: 'common', shown: true, encode: stream => gbEncoder(stream, true), decode: gbDecoder },
+	{ id: 'gb18030', label: 'gb18030', group: 'common', shown: true, encode: stream => gbEncoder(stream, false), decode: input => gbDecoder(input.bytes) },
+	{ id: 'gbk', label: 'gbk', group: 'common', shown: true, encode: stream => gbEncoder(stream, true), decode: input => gbDecoder(input.bytes) },
 	singleByte('koi8r', 'koi8-r', indexes.koi8r, 'common'),
 	singleByte('koi8u', 'koi8-u', indexes.koi8u, 'common'),
 

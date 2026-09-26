@@ -44,3 +44,14 @@ export interface DecodeUnit {
 	/** replacement 即 �，它可能一次吞掉多个输入字节 */
 	kind: 'data' | 'replacement'
 }
+
+/**
+ * 解码入口的输入：两栏共用同一份，由 UI 层解析一次后发给每一行。
+ * 字节型的编码只看 bytes；不按字节解读的行（Unicode 序号）看 text —— 后者的输入本来就不必是 hex。
+ */
+export interface DecodeInput {
+	/** 用户输入的原文 */
+	text: string
+	/** 原文按 hex 归一化后的字节；解析失败时是空数组，原因由 UI 层另行提示 */
+	bytes: number[]
+}

@@ -3,6 +3,7 @@
 // 这一类「漏改某处」的问题从结构上就不再有生存空间，剩下要守的就是清单本身。
 import { describe, expect, it } from 'vitest'
 import { registry } from '../src/encodings/registry.ts'
+import { parseHex } from '../src/input/hex.ts'
 
 describe('registry', () => {
 	it('id 与显示名都唯一', () => {
@@ -14,8 +15,13 @@ describe('registry', () => {
 		for (const entry of registry) {
 			// 单字节编码装不下汉字，会走 unmappable 分支，但同样不该抛错
 			for (const stream of ['你好', 'A', '｡｢', '']) expect(() => entry.encode(stream), entry.id).not.toThrow()
-			for (const stream of ['41 42', 'E4 BD A0', '']) expect(() => entry.decode(stream), entry.id).not.toThrow()
+			for (const stream of ['41 42', 'E4 BD A0', '']) expect(() => entry.decode({ text: stream, bytes: parseHex(stream) }), entry.id).not.toThrow()
 			}
+		})
+
+	it('Unicode 序号行的格式下拉框有四种取值', () => {
+		const unicode = registry.find(entry => entry.id === 'unicode')
+		expect(unicode?.variants?.map(variant => variant.label)).toEqual(['U+4F60', '4F60', '20320', '\\u4F60'])
 		})
 
 	it('勾选面板的三列分组都非空', () => {
@@ -24,8 +30,8 @@ describe('registry', () => {
 			}
 		})
 
-	it('默认展示的仍是改造前那套常用集', () => {
+	it('默认展示改造前那套常用集，另加 Unicode 序号行', () => {
 		expect(registry.filter(entry => entry.shown).map(entry => entry.id))
-			.toEqual(['utf8', 'big5', 'eucjp', 'iso2022jp', 'shiftjis', 'euckr', 'gb18030', 'gbk', 'windows1252'])
+			.toEqual(['utf8', 'unicode', 'big5', 'eucjp', 'iso2022jp', 'shiftjis', 'euckr', 'gb18030', 'gbk', 'windows1252'])
 		})
 	})
