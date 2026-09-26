@@ -1,12 +1,17 @@
 // P1 冒烟测试：只锁住「平移前后行为一致」这条基线，断言值取自 P0 线上版本的实际输出。
 // P2 起 encoder/decoder 返回 segment 数组，字符串视图由 renderEncode / renderDecode 提供；
 // 解码侧收字节数组，十六进制文本先过 src/input/hex.ts 的 parseHex。
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, beforeAll } from 'vitest'
 import {
 	utf8Encoder, utf8Decoder, eucjpEncoder, eucjpDecoder, sjisEncoder, sjisDecoder,
-	iso2022jpDecoder, renderEncode, renderDecode
+	iso2022jpDecoder, renderEncode, renderDecode, ensureData
 	} from '../src/conversion.ts'
 import { parseHex } from '../src/input/hex.ts'
+
+// P3 起索引数据按需加载：用到索引表的编码先 ensureData，再跑用例
+beforeAll(async () => {
+	await ensureData(['jis0208', 'jis0212'])
+	})
 
 describe('utf-8', () => {
 	it('编码：把混合文本转成空格分隔的十六进制字节', () => {
@@ -22,6 +27,14 @@ describe('euc-jp / shift_jis', () => {
 	it('日文往返一致', () => {
 		expect(renderDecode(eucjpDecoder(parseHex(renderEncode(eucjpEncoder('こんにちは')))))).toBe('こんにちは')
 		expect(renderDecode(sjisDecoder(parseHex(renderEncode(sjisEncoder('こんにちは')))))).toBe('こんにちは')
+	})
+})
+
+describe('字节输出补零（有意的行为变更，legacy 不补）', () => {
+	it('小于 0x10 的字节输出两位，与 Unicode 行的 4F60 格式一致', () => {
+		// legacy 把 0x0E 显示成 `e`：去掉空格粘贴回解码框会被 parseHex 并成 0xE4，语义全变。
+		// 补零后 `0e 04` 无论加不加空格都按两位切分，怎么粘都不会错位。
+		expect(renderEncode(utf8Encoder('\x0e\x04')).trim()).toBe('0e 04')
 	})
 })
 

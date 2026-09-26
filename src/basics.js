@@ -1,6 +1,7 @@
 // UI 层：两栏输出行与勾选面板都按 registry 生成，这里不再逐个硬编码编码清单。
 import { registry } from './encodings/registry.js'
-import { renderEncode, renderDecode } from './conversion.ts'
+import { renderEncode, renderDecode, ensureData } from './conversion.ts'
+import { isTableLoaded } from './data/load.ts'
 import { parseHex } from './input/hex.ts'
 
 /** 当前展示、参与计算的编码 id */
@@ -127,7 +128,21 @@ function clearOutputs (side) {
 	for (const r of rows.values()) r[side].out.textContent = ''
 	}
 
+/** 数据未就绪的行先显示 loading，等索引表按需加载完再统一渲染（P3）。
+ *  已就绪的表 ensureData 直接返回，这个前置对常规转换没有可感开销。 */
+async function withData (render) {
+	for (const r of rows.values()) {
+		if (live.has(r.entry.id) && r.entry.tables.some(name => !isTableLoaded(name))) {
+			r.enc.out.textContent = 'loading…'
+			r.dec.out.textContent = 'loading…'
+			}
+		}
+	await Promise.all([...live].map(id => ensureData(rows.get(id).entry.tables)))
+	render()
+	}
+
 export function encode ( stream ) {
+	void withData(() => {
 	// clear out the previous results
 	clearOutputs('enc')
 	for (const id of live) {
@@ -138,9 +153,11 @@ export function encode ( stream ) {
 		const ok = r.enc.out.textContent != '' && segments.every(segment => segment.kind != 'unmappable')
 		r.enc.row.className = ok ? 'output yes' : 'output'
 		}
+	})
 	}
 
 export function decode ( stream ) {
+	void withData(() => {
 	clearOutputs('dec')
 	// 文本 → 字节只在这里做一次，各字节型编码共用同一份结果。
 	// 解析失败（例如奇数个十六进制位）时给一个空字节数组：那类行留空并在这里说明原因，
@@ -161,6 +178,7 @@ export function decode ( stream ) {
 		const ok = r.dec.out.textContent != '' && units.every(unit => unit.kind != 'replacement')
 		r.dec.row.className = ok ? 'output yes' : 'output'
 		}
+	})
 	}
 
 /** 解析失败的提示只在解码栏出现一次，不跟着每一行重复；传 null 即清除 */

@@ -1,10 +1,15 @@
 // 注册表自检：它是两栏输出行与勾选面板的唯一数据源，这里锁住「清单本身自洽」这条不变量。
 // 直接把 id 与 DOM id 绑定之后，bug 1（按钮指向别的行）与 bug 2（引用不存在的索引）
 // 这一类「漏改某处」的问题从结构上就不再有生存空间，剩下要守的就是清单本身。
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, beforeAll } from 'vitest'
 import { registry } from '../src/encodings/registry.ts'
 import { parseHex } from '../src/input/hex.ts'
-import { renderDecode, renderEncode } from '../src/conversion.ts'
+import { renderDecode, renderEncode, ensureData } from '../src/conversion.ts'
+
+// P3 起索引数据按需加载：先按注册表声明把所有表拉齐，再跑用例
+beforeAll(async () => {
+	for (const entry of registry) await ensureData(entry.tables)
+	})
 
 describe('registry', () => {
 	it('id 与显示名都唯一', () => {
