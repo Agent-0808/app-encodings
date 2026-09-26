@@ -1,5 +1,5 @@
 // 码位与字符互转的公共助手（原定义在 basics.js）。
-// 之所以单独成模块：basics.js（UI 层）与 conversion.js（算法层）都要用它们，
+// 之所以单独成模块：basics.js（UI 层）与 conversion.ts（算法层）都要用它们，
 // 留在任一侧都会形成循环依赖。对应重构方案 §5.1 的 lib/codepoints。
 
 export function chars2cps ( chars ) { 

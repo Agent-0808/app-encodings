@@ -19,6 +19,8 @@
     "noEmit": true,
     "isolatedModules": true,
     "verbatimModuleSyntax": true,
+    /* conversion.ts 用显式 .ts 说明符导入：dev 服务器不会把 './conversion.js' 兜底解析到 .ts */
+    "allowImportingTsExtensions": true,
     "skipLibCheck": true
   },
   "include": ["src", "tests", "vite.config.ts"]
