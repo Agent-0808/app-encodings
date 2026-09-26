@@ -43,6 +43,12 @@ export interface EncodingEntry {
 	encode: (stream: string, variant?: string) => EncodeSegment[]
 	/** 解码侧统一收 DecodeInput：字节型编码用 bytes，Unicode 序号行用 text */
 	decode: (input: DecodeInput, variant?: string) => DecodeUnit[]
+	/**
+	 * 解码结果是否参与字节高亮联动（P4，§5.3「高亮按编码可选」）。
+	 * 字节型编码的 inputRange 是字节下标，与右栏镜像共用同一空间；
+	 * Unicode 序号行的 inputRange 是记号序号，不在同一空间，故不参与（默认 true）。
+	 */
+	decodeLinked?: boolean
 	}
 
 /** 24 个单字节编码共用同一组编解码器，区别只在索引表；表在 encode/decode 时经 getTable 就绪检查 */
@@ -53,7 +59,7 @@ function singleByte (id: string, label: string, table: string, group: RegistryGr
 export const registry: EncodingEntry[] = [
 	{ id: 'utf8', label: 'utf-8', group: 'common', shown: true, tables: [], encode: utf8Encoder, decode: input => utf8Decoder(input.bytes) },
 	// Unicode 序号是「伪编码」：不产生字节，只把码位按所选格式写出来（5.6）
-	{ id: 'unicode', label: 'Unicode', group: 'common', shown: true, tables: [], variants: unicodeVariants, encode: unicodeEncoder, decode: (input, variant) => unicodeDecoder(input.text, variant) },
+	{ id: 'unicode', label: 'Unicode', group: 'common', shown: true, tables: [], variants: unicodeVariants, decodeLinked: false, encode: unicodeEncoder, decode: (input, variant) => unicodeDecoder(input.text, variant) },
 	{ id: 'big5', label: 'big5', group: 'common', shown: true, tables: ['big5'], encode: big5Encoder, decode: input => big5Decoder(input.bytes) },
 	{ id: 'eucjp', label: 'euc-jp', group: 'common', shown: true, tables: ['jis0208', 'jis0212'], encode: eucjpEncoder, decode: input => eucjpDecoder(input.bytes) },
 	{ id: 'iso2022jp', label: 'iso-2022-jp', group: 'common', shown: true, tables: ['jis0208'], encode: iso2022jpEncoder, decode: input => iso2022jpDecoder(input.bytes) },

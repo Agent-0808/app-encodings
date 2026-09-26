@@ -164,7 +164,27 @@ sub { color:#C30; font-style: italic; }
 .originalNumber { font-size: 30px; color: #999; }
 .output { color: #C33; font-size: 90%; margin: 1em 20% 2em 7.5%; line-height: 1.2; padding: 5px; border-radius: 10px; }
 .output span { font-size: 150%; }
-.inputbox { width: 100%; border-radius: 10px; border: 2px solid #eee; font-size: 300%; }
+/* P4 高亮联动：输出行与输入框镜像层共用的点亮样式 */
+.output .lit { background-color: #FFFFC7; border-radius: 2px; }
+.inputbox { width: 100%; border-radius: 10px; border: 2px solid #eee; font-size: 300%; font-family: inherit; padding: 1px 2px; position: relative; z-index: 1; background: transparent; }
+
+/* 输入框镜像层：绝对定位在输入框背后（P4 高亮联动）。
+   字号、内边距、边框必须与 .inputbox 一致，镜像的文字才对得上字；文字透明，只借 span 显示高亮 */
+.mirror-wrap { position: relative; display: block; }
+.mirror {
+	position: absolute;
+	inset: 0;
+	overflow: hidden;
+	white-space: pre;
+	pointer-events: none;
+	color: transparent;
+	font-size: 300%;
+	font-family: inherit;
+	padding: 1px 2px;
+	border: 2px solid transparent;
+	border-radius: 10px;
+	}
+.mirror .lit { background-color: #FFFFC7; border-radius: 2px; }
 #rules { height: 100px; }
 .original { color: #999; font-size: 14px;  margin: 0 2px; }
 .hidden { display:none; }

@@ -1,10 +1,5 @@
-// 入口：把 legacy 模块导出的函数挂到 window 上，供 index.html 里的内联事件处理器调用。
-// P4 会把这些内联处理器改写为正式的事件绑定，届时本文件可以删除。
-import * as basics from './basics.js'
-import * as conversion from './conversion.ts'
-import { convertAllEscapes } from './conversionfunctions.js'
+// 入口：index.html 的内联事件处理器已在 P4 改写为 basics.init() 里的正式绑定，
+// window 挂载不再需要，这里只剩启动。
+import { init } from './basics.js'
 
-Object.assign(window, basics, conversion, { convertAllEscapes })
-
-// 两栏输出行与勾选面板按注册表生成，必须在挂好 window 之后执行
-basics.init()
+init()

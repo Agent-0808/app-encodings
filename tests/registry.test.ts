@@ -21,7 +21,7 @@ describe('registry', () => {
 		for (const entry of registry) {
 			// 单字节编码装不下汉字，会走 unmappable 分支，但同样不该抛错
 			for (const stream of ['你好', 'A', '｡｢', '']) expect(() => entry.encode(stream), entry.id).not.toThrow()
-			for (const stream of ['41 42', 'E4 BD A0', '']) expect(() => entry.decode({ text: stream, bytes: parseHex(stream) }), entry.id).not.toThrow()
+			for (const stream of ['41 42', 'E4 BD A0', '']) expect(() => entry.decode({ text: stream, bytes: parseHex(stream).bytes }), entry.id).not.toThrow()
 			}
 		})
 
@@ -43,7 +43,7 @@ describe('registry', () => {
 				const segments = entry.encode(sample)
 				if (segments.length == 0 || segments.some(segment => segment.kind == 'unmappable')) continue
 				const encoded = renderEncode(segments)
-				const roundTrip = renderDecode(entry.decode({ text: encoded, bytes: parseHex(encoded) }))
+				const roundTrip = renderDecode(entry.decode({ text: encoded, bytes: parseHex(encoded).bytes }))
 				if (roundTrip != sample) failures.push(`${entry.id} 处理 ${JSON.stringify(sample)} 得到 ${JSON.stringify(roundTrip)}`)
 				checked++
 				}

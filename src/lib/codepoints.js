@@ -35,6 +35,26 @@ export function chars2cps ( chars ) {
 	return out
 	}
 
+/** 字符串 → 码点的原文区间列表（UTF-16 下标，含首不含尾）。
+ *  分割规则与 chars2cps 完全一致：代理对合并为一个码点，孤立代理丢弃 ——
+ *  保证左栏镜像层的区间下标与 encoder 的 cpIndex 对齐（P4 高亮联动）。 */
+export function cpSpans ( chars ) {
+	var spans = []
+	var i = 0
+	while (i < chars.length) {
+		var b = chars.charCodeAt(i)
+		if (0xD800 <= b && b <= 0xDBFF && i + 1 < chars.length && 0xDC00 <= chars.charCodeAt(i + 1) && chars.charCodeAt(i + 1) <= 0xDFFF) {
+			spans.push([i, i + 2])
+			i += 2
+			continue
+			}
+		if (0xD800 <= b && b <= 0xDFFF) { i++; continue }  // 孤立代理：chars2cps 也会丢掉它
+		spans.push([i, i + 1])
+		i++
+		}
+	return spans
+	}
+
 export function cps2chars ( str ) {
 	// converts to characters a sequence of space-separated hex numbers representing bytes in utf8
 	// str: string, the sequence to be converted

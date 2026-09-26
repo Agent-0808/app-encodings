@@ -19,14 +19,14 @@ describe('utf-8', () => {
 	})
 
 	it('解码：十六进制字节还原为字符', () => {
-		expect(renderDecode(utf8Decoder(parseHex('E4 BD A0 E5 A5 BD')))).toBe('你好')
+		expect(renderDecode(utf8Decoder(parseHex('E4 BD A0 E5 A5 BD').bytes))).toBe('你好')
 	})
 })
 
 describe('euc-jp / shift_jis', () => {
 	it('日文往返一致', () => {
-		expect(renderDecode(eucjpDecoder(parseHex(renderEncode(eucjpEncoder('こんにちは')))))).toBe('こんにちは')
-		expect(renderDecode(sjisDecoder(parseHex(renderEncode(sjisEncoder('こんにちは')))))).toBe('こんにちは')
+		expect(renderDecode(eucjpDecoder(parseHex(renderEncode(eucjpEncoder('こんにちは'))).bytes))).toBe('こんにちは')
+		expect(renderDecode(sjisDecoder(parseHex(renderEncode(sjisEncoder('こんにちは'))).bytes))).toBe('こんにちは')
 	})
 })
 
@@ -41,13 +41,13 @@ describe('字节输出补零（有意的行为变更，legacy 不补）', () => 
 describe('旧 bug 修复回归', () => {
 	it('shift_jis 半角片假名的字节之间带分隔符，可自身往返', () => {
 		// legacy 漏掉了半角片假名之间的空格，导致输出 'a1a2a3…' 无法被 sjisDecoder 还原
-		expect(renderDecode(sjisDecoder(parseHex(renderEncode(sjisEncoder('｡｢｣､･')))))).toBe('｡｢｣､･')
+		expect(renderDecode(sjisDecoder(parseHex(renderEncode(sjisEncoder('｡｢｣､･'))).bytes))).toBe('｡｢｣､･')
 	})
 
 	it('iso-2022-jp 遇到截断的换档序列不再死循环', () => {
 		// legacy 在这些输入上会死循环；这里只要能在默认超时内正常返回即可
 		for (const truncated of ['1B', '1B 24', '1B 28']) {
-			expect(typeof renderDecode(iso2022jpDecoder(parseHex(truncated)))).toBe('string')
+			expect(typeof renderDecode(iso2022jpDecoder(parseHex(truncated).bytes))).toBe('string')
 			}
 		})
 })
@@ -57,6 +57,6 @@ describe('已知遗留行为（原样保留，是否修待定）', () => {
 		// 半角片假名（8E A1…）解出字符后 eucjpLead 没有清空（legacy 如此，见 conversion.ts 里的注释）：
 		// 紧跟着的那个 8E 先被当成「带 lead 的残缺序列」吐出一个 �，末尾残留的 0x8E 再吐一个。
 		// 这条用例把现状钉住：哪天决定修它，这里会失败，提醒同步改掉。
-		expect(renderDecode(eucjpDecoder(parseHex('8E A1 8E A2')))).toBe('｡�｢�')
+		expect(renderDecode(eucjpDecoder(parseHex('8E A1 8E A2').bytes))).toBe('｡�｢�')
 		})
 })
