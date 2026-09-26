@@ -50,30 +50,6 @@
 <div id="customise"  style="margin-bottom:2em; clear:both; cursor: pointer; text-align:center;"  onclick="toggleCustomList()"><span class="optionTrigger">change encodings shown</span></div>
 
 
-<div id="hexdecConverter" style="clear:both; text-align:center; margin-bottom: 2em;">
-<table id="charList"><tbody>
-<tr><td>hex</td><td>char</td><td>dec</td></tr>
-<tr>
-<td><input id="hex"  
-onchange="document.getElementById('dec').value=parseInt(document.getElementById('hex').value,16); document.getElementById('charconv').value=hex2char(document.getElementById('hex').value)"></td>
-
-<td><input id="charconv" 
-onchange="document.getElementById('hex').value=convertCharStr2CP( document.getElementById('charconv').value, '', false, 'hex' ); document.getElementById('dec').value=convertCharStr2CP( document.getElementById('charconv').value, '', false, 'dec' );"/></td>
-
-<td><input id="dec" onchange="document.getElementById('hex').value=parseInt(document.getElementById('dec').value).toString(16).toUpperCase(); document.getElementById('charconv').value=dec2char(document.getElementById('dec').value)"/></td>
-</tr>
-<tr> 
-<td><span class="optionTrigger" title="Click to convert the hex number to decimal." 
-onclick="document.getElementById('dec').value=parseInt(document.getElementById('hex').value,16); document.getElementById('charconv').value=hex2char(document.getElementById('hex').value)">convert</span></td>
-
-<td><span class="optionTrigger" title="Click to convert the character to hex and decimal." 
-onclick="document.getElementById('hex').value=convertCharStr2CP( document.getElementById('charconv').value, '', false, 'hex' ); document.getElementById('dec').value=convertCharStr2CP( document.getElementById('charconv').value, '', false, 'dec' );">convert</span></td>
-
-<td><span class="optionTrigger" title="Click to convert the hex number to decimal." onclick="document.getElementById('hex').value=parseInt(document.getElementById('dec').value).toString(16).toUpperCase(); document.getElementById('charconv').value=dec2char(document.getElementById('dec').value)"> convert</span></td>
-</tr>
-</tbody></table>
- </div>
-
 <div id="customsettings" style="display:none">
 <div>
 <!-- 复选框与 select all / clear all / X 由 src/basics.js 按 registry 生成 -->
@@ -105,7 +81,6 @@ onclick="document.getElementById('hex').value=convertCharStr2CP( document.getEle
   <p>For the decoder input you can provide a string of two-digit hex numbers separated by space or by percent signs.</p>
   <p>Green backgrounds appear behind sequences where all characters or bytes were successfully mapped to a character in the given encoding. Beware, however, that the character mapped to may not be the one you expect – especially in the single byte encodings.</p>
   <p>To identify characters and look up information about them you will find <a href="/uniview/">UniView</a> extremely useful. You can paste Unicode characters into the UniView <code class="kw" translate="no">text area</code> and click on the down-arrow icon below to find out what they are. (Click on the name that appears for more detailed information.)  It is particularly useful for identifying escaped characters. Copy the escape(s) to the <code class="kw" translate="no">Find</code> input area on UniView and click on <code class="kw" translate="no">Dec</code> just below.</p>
-  <p>This app also provides an extra tool below the main area, which converts between hex codepoint numbers, decimal codepoint numbers and characters. Just add one of the above and remove the focus, and the other fields will be updated.</p>
 </section>
 
 </div>

@@ -4,6 +4,7 @@
 import { describe, expect, it } from 'vitest'
 import { registry } from '../src/encodings/registry.ts'
 import { parseHex } from '../src/input/hex.ts'
+import { renderDecode, renderEncode } from '../src/conversion.ts'
 
 describe('registry', () => {
 	it('id 与显示名都唯一', () => {
@@ -22,6 +23,28 @@ describe('registry', () => {
 	it('Unicode 序号行的格式下拉框有四种取值', () => {
 		const unicode = registry.find(entry => entry.id === 'unicode')
 		expect(unicode?.variants?.map(variant => variant.label)).toEqual(['U+4F60', '4F60', '20320', '\\u4F60'])
+		})
+
+	it('每个编码的编码结果都能被自己解回原文', () => {
+		// P2 验收项：各编码往返。单字节编码装不下汉字之类的样本，此时 encoder 会标成
+		// unmappable，跳过即可 —— 这里要守的不变量是「能编出来的，就要能原样解回去」。
+		// 样本覆盖 ASCII、中日韩、拉丁扩展、希腊、希伯来，保证每个编码至少被检查一次。
+		// 不含半角片假名：euc-jp 的 legacy 残留 lead 状态会多出一个 �（见 conversion.test.ts）。
+		const samples = ['ABC 123', '你好', 'こんにちは', '당신', 'héllo', 'Γειά', 'עברית']
+		const failures: string[] = []
+		let checked = 0
+		for (const entry of registry) {
+			for (const sample of samples) {
+				const segments = entry.encode(sample)
+				if (segments.length == 0 || segments.some(segment => segment.kind == 'unmappable')) continue
+				const encoded = renderEncode(segments)
+				const roundTrip = renderDecode(entry.decode({ text: encoded, bytes: parseHex(encoded) }))
+				if (roundTrip != sample) failures.push(`${entry.id} 处理 ${JSON.stringify(sample)} 得到 ${JSON.stringify(roundTrip)}`)
+				checked++
+				}
+			}
+		expect(failures).toEqual([])
+		expect(checked).toBeGreaterThan(registry.length)  // 至少每个编码都轮上一遍
 		})
 
 	it('勾选面板的三列分组都非空', () => {
